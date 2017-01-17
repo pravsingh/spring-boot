@@ -2555,14 +2555,15 @@ which suits most providers and matches the spec, but if you need to change it yo
 [[boot-features-security-custom-user-info]]
 === Customizing the User Info RestTemplate
 If you have a `user-info-uri`, the resource server features use an `OAuth2RestTemplate`
-internally to fetch user details for authentication. This is provided as a qualified
-`@Bean` with id `userInfoRestTemplate`, but you shouldn't need to know that to just
-use it. The default should be fine for most providers, but occasionally you might need to
-add additional interceptors, or change the request authenticator (which is how the token
-gets attached to outgoing requests). To add a customization just create a bean of type
-`UserInfoRestTemplateCustomizer` - it has a single method that will be called after the
-bean is created but before it is initialized. The rest template that is being customized
-here is _only_ used internally to carry out authentication.
+internally to fetch user details for authentication. This is provided as a `@Bean` of
+type `UserInfoRestTemplateFactory`. The default should be fine for most providers, but
+occasionally you might need to add additional interceptors, or change the request
+authenticator (which is how the token gets attached to outgoing requests). To add a
+customization just create a bean of type `UserInfoRestTemplateCustomizer` - it has a
+single method that will be called after the bean is created but before it is initialized.
+The rest template that is being customized here is _only_ used internally to carry out
+authentication. Alternatively, you could define your own `UserInfoRestTemplateFactory`
+`@Bean` to take full control.
 
 [TIP]
 ====
@@ -2733,7 +2734,7 @@ Java's `javax.sql.DataSource` interface provides a standard method of working wi
 database connections. Traditionally a DataSource uses a `URL` along with some
 credentials to establish a database connection.
 
-TIP: Check also <<the '`How-to`' section,howto.adoc#howto-configure-a-datasource] for more
+TIP: Check also <<howto.adoc#howto-configure-a-datasource,the '`How-to`' section>> for more
 advanced examples, typically to take full control over the configuration of the
 DataSource.
 
@@ -3051,6 +3052,16 @@ passes `hibernate.globally_quoted_identifiers` to the Hibernate entity manager.
 By default the DDL execution (or validation) is deferred until the `ApplicationContext`
 has started. There is also a `spring.jpa.generate-ddl` flag, but it is not used if
 Hibernate autoconfig is active because the `ddl-auto` settings are more fine-grained.
+
+
+
+[[boot-features-jpa-in-web-environment]]
+==== Open EntityManager in View
+If you are running a web application, Spring Boot will by default register
+{spring-javadoc}/orm/jpa/support/OpenEntityManagerInViewInterceptor.html[`OpenEntityManagerInViewInterceptor`]
+to apply the "Open EntityManager in View" pattern, i.e. to allow for lazy loading in web
+views. If you don't want this behavior you should set `spring.jpa.open-in-view` to
+`false` in your `application.properties`.
 
 
 
@@ -3484,13 +3495,13 @@ persistence for the embedded mode:
 [[boot-features-neo4j-ogm-session]]
 ==== Neo4jSession
 
-By default, the lifetime of the session is scoped to the application. If you are running a
-web application, you can change it so that the session is bound to the thread for the
-entire processing of the request (i.e. the "Open Session in View" pattern):
+By default, if you are running a web application, the session is bound to the thread for
+the entire processing of the request (i.e. the "Open Session in View" pattern). If you
+don't want this behavior add the following to your `application.properties`:
 
 
 ----
-	spring.data.neo4j.open-in-view=true
+	spring.data.neo4j.open-in-view=false
 ----
 
 
@@ -4659,7 +4670,7 @@ for more of the supported options.
 
 
 [[boot-features-kafka-sending-a-message]]
-=== Sending a Message
+==== Sending a Message
 Spring's `KafkaTemplate` is auto-configured and you can autowire them directly in your own
 beans:
 
@@ -4683,7 +4694,7 @@ public class MyBean {
 
 
 [[boot-features-kafka-receiving-a-message]]
-=== Receiving a Message
+==== Receiving a Message
 When the Apache Kafka infrastructure is present, any bean can be annotated with
 `@KafkaListener` to create a listener endpoint. If no `KafkaListenerContainerFactory`
 has been defined, a default one is configured automatically with keys defined in
@@ -4707,7 +4718,7 @@ The following component creates a listener endpoint on the `someTopic` topic:
 
 
 [[boot-features-kafka-extra-props]]
-=== Additional Kafka Properties
+==== Additional Kafka Properties
 The properties supported by auto configuration are shown in
 <<common-application-properties>>. Note that these properties (hyphenated or camelCase)
 map directly to the Apache Kafka dotted properties for the most part, refer to the Apache
